@@ -1,111 +1,180 @@
-import React,{useState} from "react";
-import Axios from 'axios';
-import './App.css';
+    import React, { useState } from 'react';
+    import Container  from '@material-ui/core/Container';
+    import  TextField from '@material-ui/core/TextField';
+    import Button from '@material-ui/core/Button';
+    import IconButton from '@material-ui/core/IconButton';
+    import RemoveIcon from '@material-ui/icons/Remove';
+    import AddIcon from '@material-ui/icons/Add';
+    import Icon from '@material-ui/core/Icon'; 
+    import Axios from 'axios';
 
-function App() {
 
-const [firstnameReg,setfirstnameReg] = useState('')
-const [lastnameReg,setlastnameReg] = useState('')
+    import { makeStyles, responsiveFontSizes } from '@material-ui/core/styles';
+import axios from 'axios';
 
-const [usernameReg,setusernameReg] = useState('')
-const [passwordReg,setPasswordReg] = useState('')
+    const useStyles = makeStyles((theme) => ({
+      root : {
+        '& .MuiTextField-root' : {
+          margin : theme.spacing(3),
+        },
+      
+      },
+      button : {
+        margin : theme.spacing(1),
+      }
+    }))
 
-const [username,setusername] = useState('')
-const [password,setPassword] = useState('')
-
-const [LoginStatus, setLoginStatus] = useState('');
-
-const register = ()=>{
-  Axios.post('http://localhost:5003/register', {
-    firstname :firstnameReg,
-    lastname :lastnameReg,
-    username: usernameReg,
-    password :passwordReg
-  }).then((response)=>{
-    console.log(response);
-  });
-
-};
-
-const login = ()=>{
-  Axios.post('http://localhost:5003/login', {
-    username: username,
-    password :password,
-  }).then((response)=>{
-
-    if(response.data.message){
-      setLoginStatus(response.data.message)
-     
-    }else{
-      setLoginStatus(response.data[0].username)   
-    }
-    console.log(response.data);
-    if(response.data){
-       window.location.href="http://localhost:3000/";
-    }
     
     
-  });
-};
-
-  return (
-    <div className="App">
-      <div className ="registration">
-        <h1>Registration</h1>
-
-        <label>FirstName : </label>
-        <input type="text"
-        onChange={(e)=> {
-          setfirstnameReg(e.target.value);
-        }}
-        /><br/>
-
-        <label>LastName : </label>
-        <input type="text"
-        onChange={(e)=> {
-          setlastnameReg(e.target.value);
-        }}
-        /><br/>
 
 
-        <label>Username : </label>
-        <input type="text"
-          onChange={(e)=> {
-            setusernameReg(e.target.value);
-          }}
-        /><br/>
-        <label>Password : </label>
-        <input type="text"
-        onChange={(e)=> {
-          setPasswordReg(e.target.value);
-        }}
-        /><br/>
-        <button onClick={register}>Register</button>
-      </div>
+    function App(){
 
-      <div className ="login">
-        <h1>Login</h1>
+      const classes = useStyles()
+      const [inputFields , setInputFields] = useState([
+        {Order_detail_id: '' , Tracking_number:'' , Device_serial_number: '' },//number of objs to add ie fields
+      ]);
 
-        <label>Username : </label>
-        <input type="text" placeholder="Username..."
-         onChange={(e)=> {
-          setusername(e.target.value);
-        }}
-        /><br/>
 
-        <label>Password : </label>
-        <input type="text" placeholder="Password..."
-         onChange={(e)=> {
-          setPassword(e.target.value);
-        }}
-        /><br/>
+      const [Status, setStatus] = useState('');
 
-        <button onClick={login }>Login</button>
-      </div>  
+      //connection code
+      
+      const getdetails = (e) =>{
+        let Order_detail_id = inputFields[0].Order_detail_id;
+        let Tracking_number =inputFields[0].Tracking_number;
+        let Device_serial_number =inputFields[0].Device_serial_number;
+        
+        console.log('formvalues',inputFields[0]  , e);
+      
+        let axiosConfig = {
+          headers: {
+              'Content-Type': 'application/json',
+              "Access-Control-Allow-Origin": "*",
+          }
+        };
+        
+        Axios({
+           method: 'post',
+           url: 'http://localhost:3002/getdetails',
+          data:[
+             ...inputFields
+         ],
+           headers : {'Content-Type': 'application/json'},
+         }).then((result , err) => 
+          {if(result.status == 200){
+            setStatus("Data Added");
+          }
+        else if(err){
+          setStatus("Error Occurred");
+        }});
+          
+       };
 
-      <h1>{LoginStatus}</h1>
-    </div>
-  );
-}
+      //axios.post(`http://localhost:3002/getdetails`,getdetails).
+                    
 
-export default App;
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          console.log("InputFields" , inputFields);
+          console.log(e);
+        };
+
+      const handleChangeInput = (index,event) =>{
+        const values =[...inputFields];
+        values[index][event.target.name] = event.target.value;
+        console.log("val",values);
+        setInputFields(values);
+      }
+
+    //  const getdetailsstatus = (e) =>{
+    //    const send = [...inputFields];
+    //    ("bajvis");
+    //   } 
+      
+      
+      const [counter , updateCounter]= useState(0);
+
+      const handleRemoveFields = (index)=>{
+        updateCounter(counter - 1);
+        const values = [...inputFields];
+        values.splice(index, 1);
+        setInputFields(values);
+        }
+
+      const handleAddFields = ()=>{
+        updateCounter(counter + 1);
+        setInputFields([...inputFields, {Order_detail_id: '' , Tracking_number:'' , Device_serial_number: '' }])
+      }
+
+      
+
+      return ( 
+        <Container>
+          <h1> Order Details</h1>
+          <form className = {classes.root} onSubmit = {handleSubmit}>
+          {inputFields.map((inputField,index) => (
+            <div key ={index}>
+              <TextField 
+                name = "Order_detail_id"
+                label = "Order_detail_id"
+                variant = "filled"
+                value = {inputField.Order_detail_id}
+                onChange = {event => handleChangeInput (index,event)}
+              />
+
+              <TextField 
+                name = "Tracking_number"
+                label = "Tracking_number"
+                variant = "filled"
+                value = {inputField.Tracking_number}
+                onChange = {event => handleChangeInput (index,event)}
+              />
+
+              <TextField 
+                name = "Device_serial_number"
+                label = "Device_serial_number"
+                variant = "filled"
+                value = {inputField.Device_serial_number}
+                onChange = {event => handleChangeInput(index,event)}
+              />
+              
+              {counter >0 && (<IconButton
+              onClick = { () => handleRemoveFields(index)}
+              >
+                <RemoveIcon />
+              </IconButton>)}
+
+            </div>
+          ))}
+
+            
+
+              <IconButton
+                onClick = { () => handleAddFields()}
+                >
+                <AddIcon />
+              </IconButton>
+
+          <Button 
+          className = {classes.button}
+          variant = "contained" 
+          color = "secondary" 
+          type = "submit" 
+          onClick ={getdetails} //getdetails
+          endIcon = {
+          <Icon>send</Icon>
+          }>
+            Send</Button>
+          </form>
+
+          <h1>{Status}</h1>
+
+        </Container>
+      ); 
+
+      
+    }
+
+      export default App;
+  
